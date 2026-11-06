@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Maal Record & Payment Tracker</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Google Fonts Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              50: '#eff6ff',
+              100: '#dbeafe',
+              500: '#3b82f6',
+              600: '#2563eb',
+              700: '#1d4ed8',
+              800: '#1e40af',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    /* Custom Scrollbar for sleek table viewing */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #f1f5f9;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+
+    /* Sticky Header styling helper */
+    .sticky-th {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    /* Glass effect */
+    .glass-card {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(8px);
+    }
+  </style>
+</head>
+<body class="bg-slate-100 text-slate-800 font-sans min-h-screen p-3 sm:p-6 lg:p-8">
+
+  <div class="max-w-6xl mx-auto space-y-6">
+    
+    <!-- Top Header & Branding -->
+    <header class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-5 sm:p-6 rounded-2xl shadow-sm border border-slate-200/80">
+      <div class="flex items-center space-x-3">
+        <div class="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-md shadow-blue-500/30">
+          <i class="fa-solid fa-boxes-packing text-2xl"></i>
+        </div>
+        <div>
+          <h1 class="text-2xl font-bold text-slate-900 leading-tight">Maal & Payment Record</h1>
+          <p class="text-xs sm:text-sm text-slate-500 font-medium">Smart Stock, Delivery & Payment Management</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-2 self-end sm:self-auto">
+        <span id="statusBadge" class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+          <span class="w-2 h-2 rounded-full bg-emerald-500 mr-2 animate-pulse"></span> Auto-Saved
+        </span>
+      </div>
+    </header>
+
+    <!-- KPI Metric Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
+      <!-- Total Price Card -->
+      <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200/80 flex items-center justify-between">
+        <div>
+          <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Total Price (Kul Maal)</p>
+          <h3 class="text-2xl sm:text-3xl font-extrabold text-slate-800 mt-1" id="kpiTotalPrice">Rs. 0</h3>
+        </div>
+        <div class="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-xl font-bold">
+          <i class="fa-solid fa-calculator"></i>
+        </div>
+      </div>
+
+      <!-- Total Paid Card -->
+      <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200/80 flex items-center justify-between">
+        <div>
+          <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Total Paid (Vasool / Ada)</p>
+          <h3 class="text-2xl sm:text-3xl font-extrabold text-emerald-600 mt-1" id="kpiTotalPaid">Rs. 0</h3>
+        </div>
+        <div class="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xl font-bold">
+          <i class="fa-solid fa-circle-check"></i>
+        </div>
+      </div>
+
+      <!-- Total Remaining Card -->
+      <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200/80 flex items-center justify-between">
+        <div>
+          <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Total Remaining (Baqaya)</p>
+          <h3 class="text-2xl sm:text-3xl font-extrabold text-rose-600 mt-1" id="kpiTotalRemaining">Rs. 0</h3>
+        </div>
+        <div class="w-12 h-12 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center text-xl font-bold">
+          <i class="fa-solid fa-clock-rotate-left"></i>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Content Box -->
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-200/80 overflow-hidden">
+      
+      <!-- New Entry Form -->
+      <div class="p-5 sm:p-6 border-b border-slate-100 bg-slate-50/50">
+        <h2 class="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
+          <i class="fa-solid fa-plus-circle text-blue-600"></i> Add New Record (Naya Maal Record)
+        </h2>
+        
+        <form id="entryForm" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3 sm:gap-4">
+          
+          <div class="lg:col-span-2">
+            <label class="block text-xs font-medium text-slate-600 mb-1">Month (Mahina)</label>
+            <input id="month" type="text" placeholder="e.g. Jan / Oct" required
+              class="w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition text-sm">
+          </div>
+
+          <div class="lg:col-span-3">
+            <label class="block text-xs font-medium text-slate-600 mb-1">Item Description</label>
+            <input id="item" type="text" placeholder="Item ka naam" required
+              class="w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition text-sm">
+          </div>
+
+          <div class="lg:col-span-2">
+            <label class="block text-xs font-medium text-slate-600 mb-1">Quantity (Tadad)</label>
+            <input id="qty" type="text" placeholder="e.g. 50 Cartons / 10kg" required
+              class="w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition text-sm">
+          </div>
+
+          <div class="lg:col-span-2">
+            <label class="block text-xs font-medium text-slate-600 mb-1">Total Price (Rs.)</label>
+            <input id="price" type="number" min="0" step="0.01" placeholder="0.00" required
+              class="w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition text-sm">
+          </div>
+
+          <div class="lg:col-span-2">
+            <label class="block text-xs font-medium text-slate-600 mb-1">Paid (Rs.)</label>
+            <input id="paid" type="number" min="0" step="0.01" placeholder="0.00" value="0" required
+              class="w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition text-sm">
+          </div>
+
+          <div class="lg:col-span-1 flex items-end">
+            <button type="submit" class="w-full py-2.5 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-semibold rounded-xl shadow-sm hover:shadow transition duration-150 flex items-center justify-center gap-1 text-sm">
+              <i class="fa-solid fa-plus text-xs"></i> Add
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Action & Filter Bar -->
+      <div class="p-4 sm:p-5 border-b border-slate-100 flex flex-col md:flex-row justify-between items-stretch md:items-center gap-4 bg-white">
+        
+        <!-- Search Input -->
+        <div class="relative max-w-xs w-full">
+          <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3 text-slate-400 text-sm"></i>
+          <input type="text" id="searchInput" placeholder="Search item or month..."
+            class="w-full pl-9 pr-4 py-2 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none">
+        </div>
+
+        <!-- Import / Export Controls -->
+        <div class="flex flex-wrap items-center gap-2">
+          
+          <!-- Hidden File Input for Excel Upload -->
+          <input type="file" id="excelFileInput" accept=".xlsx, .xls" class="hidden">
+          
+          <button type="button" id="uploadBtn"
+            class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 rounded-xl font-medium text-sm transition flex items-center gap-2">
+            <i class="fa-solid fa-file-import text-blue-600"></i> Import Excel File
+          </button>
+
+          <button type="button" id="exportBtn"
+            class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-semibold text-sm shadow-sm transition flex items-center gap-2">
+            <i class="fa-solid fa-file-excel"></i> Export Excel (.xlsx)
+          </button>
+
+          <button type="button" id="clearAllBtn"
+            class="px-3 py-2 bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 rounded-xl font-medium text-sm transition flex items-center gap-1.5"
+            title="Clear all stored records">
+            <i class="fa-solid fa-trash-can"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Table Section with Fixed/Sticky Header -->
+      <div class="overflow-x-auto max-h-[500px]">
+        <table class="w-full text-left border-collapse min-w-[750px]">
+          <thead>
+            <tr class="bg-slate-100/90 text-slate-600 font-semibold text-xs uppercase tracking-wider border-b border-slate-200 sticky-th backdrop-blur-md">
+              <th class="py-3.5 px-4">Month</th>
+              <th class="py-3.5 px-4">Item Name</th>
+              <th class="py-3.5 px-4">Quantity</th>
+              <th class="py-3.5 px-4 text-right">Total Price (Rs.)</th>
+              <th class="py-3.5 px-4 text-right">Paid (Rs.)</th>
+              <th class="py-3.5 px-4 text-right">Remaining (Rs.)</th>
+              <th class="py-3.5 px-4 text-center">Status</th>
+              <th class="py-3.5 px-4 text-center">Action</th>
+            </tr>
+          </thead>
+          <tbody id="rows" class="divide-y divide-slate-100 text-sm">
+            <!-- Dynamic Rows loaded via Javascript -->
+          </tbody>
+          <!-- Sticky / Prominent Table Footer -->
+          <tfoot class="bg-slate-50 font-bold border-t-2 border-slate-200 text-slate-800 text-sm sticky bottom-0">
+            <tr>
+              <td colspan="3" class="py-4 px-4 text-slate-600 uppercase text-xs tracking-wider">Grand Total:</td>
+              <td id="totalPrice" class="py-4 px-4 text-right text-slate-900">Rs. 0</td>
+              <td id="totalPaid" class="py-4 px-4 text-right text-emerald-600">Rs. 0</td>
+              <td id="totalRemaining" class="py-4 px-4 text-right text-rose-600">Rs. 0</td>
+              <td colspan="2" class="py-4 px-4"></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+
+      <!-- Helper / Hint Footer -->
+      <div class="p-4 bg-slate-50 border-t border-slate-100 flex flex-col sm:flex-row justify-between items-center gap-2 text-xs text-slate-500">
+        <span class="flex items-center gap-1.5">
+          <i class="fa-solid fa-circle-info text-blue-500"></i>
+          Excel import standard columns: Month, Item, Quantity, Total Price, Paid, Remaining.
+        </span>
+        <span>Maal Record v2.0 • SheetJS Enabled</span>
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- Custom Alert/Notification Modal -->
+  <div id="customModal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 z-50 hidden">
+    <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-xl border border-slate-100 text-center space-y-4">
+      <div id="modalIconContainer" class="w-12 h-12 rounded-full bg-blue-100 text-blue-600 mx-auto flex items-center justify-center text-xl">
+        <i class="fa-solid fa-circle-info"></i>
+      </div>
+      <h3 id="modalTitle" class="text-lg font-bold text-slate-900">Notice</h3>
+      <p id="modalMessage" class="text-sm text-slate-600 leading-relaxed"></p>
+      <button id="modalCloseBtn" type="button" class="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-medium rounded-xl text-sm transition">
+        OK
+      </button>
+    </div>
+  </div>
+
+  <!-- SheetJS Library -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+  <!-- Application Logic -->
+  <script>
+    const STORAGE_KEY = "simpleMaalRecord_v2";
+    let records = [];
+
+    // Helper functions
+    const $ = id => document.getElementById(id);
+    const money = n => Number(n || 0).toLocaleString("en-PK", { maximumFractionDigits: 2 });
+
+    // Show Custom Modal replace native alert()
+    function showAlert(message, title = "Notification", type = "info") {
+      const modal = $("customModal");
+      const modalTitle = $("modalTitle");
+      const modalMessage = $("modalMessage");
+      const iconContainer = $("modalIconContainer");
+
+      modalTitle.textContent = title;
+      modalMessage.textContent = message;
+
+      if (type === "error") {
+        iconContainer.className = "w-12 h-12 rounded-full bg-rose-100 text-rose-600 mx-auto flex items-center justify-center text-xl";
+        iconContainer.innerHTML = '<i class="fa-solid fa-circle-exclamation"></i>';
+      } else if (type === "success") {
+        iconContainer.className = "w-12 h-12 rounded-full bg-emerald-100 text-emerald-600 mx-auto flex items-center justify-center text-xl";
+        iconContainer.innerHTML = '<i class="fa-solid fa-circle-check"></i>';
+      } else {
+        iconContainer.className = "w-12 h-12 rounded-full bg-blue-100 text-blue-600 mx-auto flex items-center justify-center text-xl";
+        iconContainer.innerHTML = '<i class="fa-solid fa-circle-info"></i>';
+      }
+
+      modal.classList.remove("hidden");
+    }
+
+    $("modalCloseBtn").addEventListener("click", () => {
+      $("customModal").classList.add("hidden");
+    });
+
+    // Load initial records
+    try {
+      records = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+    } catch(e) {
+      records = [];
+    }
+
+    function saveLocal() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
+      $("statusBadge").innerHTML = '<span class="w-2 h-2 rounded-full bg-emerald-500 mr-2 animate-pulse"></span> Auto-Saved';
+    }
+
+    // Render Table and Summary Metrics
+    function render() {
+      const tbody = $("rows");
+      tbody.innerHTML = "";
+      
+      const filterText = ($("searchInput").value || "").toLowerCase().trim();
+      
+      let sumPrice = 0, sumPaid = 0, sumRemaining = 0;
+
+      const filteredRecords = records.filter(r => 
+        (r.month && r.month.toLowerCase().includes(filterText)) ||
+        (r.item && r.item.toLowerCase().includes(filterText))
+      );
+
+      if (filteredRecords.length === 0) {
+        const emptyTr = document.createElement("tr");
+        emptyTr.innerHTML = `
+          <td colspan="8" class="text-center py-8 text-slate-400">
+            <i class="fa-solid fa-folder-open text-3xl mb-2 block text-slate-300"></i>
+            Koi record mojood nahi hai.
+          </td>
+        `;
+        tbody.appendChild(emptyTr);
+      } else {
+        filteredRecords.forEach((r, i) => {
+          const actualIndex = records.indexOf(r);
+          const price = Number(r.price) || 0;
+          const paid = Number(r.paid) || 0;
+          const remaining = price - paid;
+
+          sumPrice += price;
+          sumPaid += paid;
+          sumRemaining += remaining;
+
+          // Compute Status Badge
+          let statusBadgeHTML = '';
+          if (remaining <= 0) {
+            statusBadgeHTML = '<span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">Paid</span>';
+          } else if (paid > 0) {
+            statusBadgeHTML = '<span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200">Partial</span>';
+          } else {
+            statusBadgeHTML = '<span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-200">Pending</span>';
+          }
+
+          const tr = document.createElement("tr");
+          tr.className = "hover:bg-slate-50/80 transition duration-150";
+
+          tr.innerHTML = `
+            <td class="py-3 px-4 font-medium text-slate-700">${r.month || ''}</td>
+            <td class="py-3 px-4 font-semibold text-slate-900">${r.item || ''}</td>
+            <td class="py-3 px-4 text-slate-600">${r.qty || ''}</td>
+            <td class="py-3 px-4 text-right font-medium text-slate-900">Rs. ${money(price)}</td>
+            <td class="py-3 px-4 text-right font-medium text-emerald-600">Rs. ${money(paid)}</td>
+            <td class="py-3 px-4 text-right font-medium ${remaining > 0 ? 'text-rose-600 font-semibold' : 'text-slate-500'}">Rs. ${money(remaining)}</td>
+            <td class="py-3 px-4 text-center">${statusBadgeHTML}</td>
+            <td class="py-3 px-4 text-center">
+              <button onclick="deleteRecord(${actualIndex})" type="button" 
+                class="w-8 h-8 rounded-lg bg-slate-100 hover:bg-rose-100 text-slate-400 hover:text-rose-600 transition flex items-center justify-center mx-auto"
+                title="Delete Row">
+                <i class="fa-solid fa-trash text-xs"></i>
+              </button>
+            </td>
+          `;
+          tbody.appendChild(tr);
+        });
+      }
+
+      // Overall Totals (from total records list)
+      const grandTotalPrice = records.reduce((s, r) => s + (Number(r.price) || 0), 0);
+      const grandTotalPaid = records.reduce((s, r) => s + (Number(r.paid) || 0), 0);
+      const grandTotalRemaining = grandTotalPrice - grandTotalPaid;
+
+      // Update Table Footer
+      $("totalPrice").textContent = "Rs. " + money(grandTotalPrice);
+      $("totalPaid").textContent = "Rs. " + money(grandTotalPaid);
+      $("totalRemaining").textContent = "Rs. " + money(grandTotalRemaining);
+
+      // Update KPI Cards
+      $("kpiTotalPrice").textContent = "Rs. " + money(grandTotalPrice);
+      $("kpiTotalPaid").textContent = "Rs. " + money(grandTotalPaid);
+      $("kpiTotalRemaining").textContent = "Rs. " + money(grandTotalRemaining);
+    }
+
+    // Delete Row
+    window.deleteRecord = function(index) {
+      records.splice(index, 1);
+      saveLocal();
+      render();
+    };
+
+    // Form Submit Event
+    $("entryForm").addEventListener("submit", e => {
+      e.preventDefault();
+      const price = Number($("price").value);
+      const paid = Number($("paid").value);
+
+      if (paid > price) {
+        showAlert("Ada shuda (Paid) ki raqam kul price se zyada nahi ho sakti.", "Validation Error", "error");
+        return;
+      }
+
+      records.push({
+        month: $("month").value.trim(),
+        item: $("item").value.trim(),
+        qty: $("qty").value.trim(),
+        price,
+        paid
+      });
+
+      saveLocal();
+      render();
+
+      $("item").value = "";
+      $("qty").value = "";
+      $("price").value = "";
+      $("paid").value = "0";
+      $("item").focus();
+    });
+
+    // Excel Export Functionality
+    $("exportBtn").addEventListener("click", () => {
+      if (!window.XLSX) {
+        showAlert("Excel library load nahi ho saki. Internet connection check karein.", "Error", "error");
+        return;
+      }
+      if (records.length === 0) {
+        showAlert("Export karne ke liye koi data nahi hai.", "Data Empty", "info");
+        return;
+      }
+
+      const exportData = records.map(r => ({
+        "Month": r.month,
+        "Item": r.item,
+        "Quantity": r.qty,
+        "Total Price (Rs.)": Number(r.price),
+        "Paid (Rs.)": Number(r.paid),
+        "Remaining (Rs.)": Number(r.price) - Number(r.paid)
+      }));
+
+      // Add Total Row at bottom
+      exportData.push({
+        "Month": "TOTAL",
+        "Item": "",
+        "Quantity": "",
+        "Total Price (Rs.)": records.reduce((s, r) => s + Number(r.price), 0),
+        "Paid (Rs.)": records.reduce((s, r) => s + Number(r.paid), 0),
+        "Remaining (Rs.)": records.reduce((s, r) => s + (Number(r.price) - Number(r.paid)), 0)
+      });
+
+      const ws = XLSX.utils.json_to_sheet(exportData);
+      ws["!cols"] = [{ wch: 15 }, { wch: 25 }, { wch: 16 }, { wch: 20 }, { wch: 16 }, { wch: 20 }];
+      
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Maal Record");
+      XLSX.writeFile(wb, "Maal_Payment_Record.xlsx");
+      
+      showAlert("Aap ka Maal record Excel file (.xlsx) mein save ho gaya hai.", "Export Successful", "success");
+    });
+
+    // Trigger Excel Import Dialog
+    $("uploadBtn").addEventListener("click", () => {
+      $("excelFileInput").click();
+    });
+
+    // Read and Parse Uploaded Excel File (.xlsx)
+    $("excelFileInput").addEventListener("change", (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(evt) {
+        try {
+          const data = new Uint8Array(evt.target.result);
+          const workbook = XLSX.read(data, { type: 'array' });
+
+          const firstSheetName = workbook.SheetNames[0];
+          const worksheet = workbook.Sheets[firstSheetName];
+
+          // Convert to JSON
+          const rawJson = XLSX.utils.sheet_to_json(worksheet, { defval: "" });
+
+          if (rawJson.length === 0) {
+            showAlert("Is Excel file mein koi data nahi mila.", "Empty File", "error");
+            return;
+          }
+
+          let importedCount = 0;
+
+          rawJson.forEach(row => {
+            // Flexible Key Matching for Excel Columns
+            const month = row["Month"] || row["month"] || row["MAHINA"] || row["Mahina"] || "";
+            const item = row["Item"] || row["item"] || row["Item Name"] || row["ITEM"] || "";
+            const qty = row["Quantity"] || row["qty font"] || row["QTY"] || row["Qty"] || row["Tadad"] || "";
+            
+            const price = Number(row["Total Price (Rs.)"] || row["Total Price"] || row["Price"] || row["PRICE"] || 0);
+            const paid = Number(row["Paid (Rs.)"] || row["Paid"] || row["PAID font"] || row["Ada"] || 0);
+
+            // Skip Summary / TOTAL Rows if present in exported file
+            if (String(month).toUpperCase() === "TOTAL" || String(item).toUpperCase() === "TOTAL") {
+              return;
+            }
+
+            if (item || month || price > 0) {
+              records.push({
+                month: String(month).trim(),
+                item: String(item).trim(),
+                qty: String(qty).trim(),
+                price: isNaN(price) ? 0 : price,
+                paid: isNaN(paid) ? 0 : paid
+              });
+              importedCount++;
+            }
+          });
+
+          saveLocal();
+          render();
+          showAlert(`${importedCount} records Excel file se kamyabi se upload ho gaye hain!`, "Import Successful", "success");
+
+        } catch (err) {
+          console.error(err);
+          showAlert("Excel file reading mein masla aya hai. Khas taur par .xlsx format check karein.", "File Read Error", "error");
+        }
+      };
+
+      reader.readAsArrayBuffer(file);
+      // Reset input value so re-uploading same file works
+      e.target.value = "";
+    });
+
+    // Search filter live response
+    $("searchInput").addEventListener("input", render);
+
+    // Clear all records button
+    $("clearAllBtn").addEventListener("click", () => {
+      if (records.length === 0) return;
+      if (confirm("Kya aap tamam record khatam (delete) karna chahte hain?")) {
+        records = [];
+        saveLocal();
+        render();
+        showAlert("Tamam records delete ho gaye hain.", "Cleared", "info");
+      }
+    });
+
+    // Initial render call
+    render();
+  </script>
+</body>
+</html>
